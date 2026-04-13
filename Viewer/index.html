@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kepler Workstation — Jupiter Helium Constellation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; color: #fff; font-family: 'Courier New', monospace; overflow: hidden; }
+canvas { display: block; }
+#hud {
+    position: absolute; top: 20px; left: 20px;
+    font-size: 14px; line-height: 1.6; pointer-events: none;
+    text-shadow: 0 0 10px rgba(0,150,255,0.5);
+}
+#hud .title { font-size: 20px; font-weight: bold; color: #4af; margin-bottom: 8px; }
+#hud .stat { color: #8cf; }
+#hud .value { color: #fff; font-weight: bold; }
+#hud .he { color: #ffcc00; font-size: 18px; }
+#controls {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 15px; pointer-events: all;
+}
+#controls button {
+    background: rgba(50,100,200,0.3); border: 1px solid #4af; color: #fff;
+    padding: 8px 16px; cursor: pointer; font-family: inherit; font-size: 13px;
+    border-radius: 4px;
+}
+#controls button:hover { background: rgba(50,100,200,0.6); }
+#timeline {
+    width: 400px; accent-color: #4af; cursor: pointer;
+}
+#yearLabel { color: #4af; font-size: 16px; min-width: 60px; text-align: center; }
+#credit {
+    position: absolute; bottom: 20px; right: 20px; font-size: 11px;
+    color: #456; pointer-events: none;
+}
+#loading {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 24px; color: #4af;
+}
+</style>
+</head>
+<body>
+<div id="loading">Loading constellation data...</div>
+<div id="hud" style="display:none">
+    <div class="title">KEPLER WORKSTATION</div>
+    <div class="stat">Jupiter Helium Harvester Constellation</div>
+    <div style="margin-top:10px">
+        <span class="stat">Year:</span> <span class="value" id="hudYear">2029</span><br>
+        <span class="stat">Buckets launched:</span> <span class="value" id="hudLaunched">0</span><br>
+        <span class="stat">Active in flight:</span> <span class="value" id="hudActive">0</span><br>
+        <span class="stat">Delivered:</span> <span class="value" id="hudDelivered">0</span><br>
+        <span class="stat">Lost:</span> <span class="value" id="hudLost">0</span><br>
+        <div style="margin-top:8px" class="he">
+            He delivered: <span id="hudHe">0</span> tonnes
+        </div>
+    </div>
+</div>
+<div id="controls" style="display:none">
+    <button id="btnPlay">▶ Play</button>
+    <button id="btnSpeed">1×</button>
+    <input type="range" id="timeline" min="0" max="1000" value="0">
+    <span id="yearLabel">2029</span>
+</div>
+<div id="credit">Kepler Workstation · MIT License · Real JPL DE440 Ephemeris</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// Scale: 1 unit = 1 AU
+const AU = 1.0;
+
+let scene, camera, renderer, controls;
+let data = null;
+let planetMeshes = {};
+let planetOrbits = {};
+let bucketMeshes = [];
+let simYear = 2029;
+let playing = true;
+let speed = 1;
+let trailLines = [];
+
+// Init Three.js
+function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.001, 100);
+    camera.position.set(0, 3, 4);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 0.1;
+    controls.maxDistance = 50;
+
+    // Starfield
+    const starGeo = new THREE.BufferGeometry();
+    const starVerts = new Float32Array(3000 * 3);
+    for (let i = 0; i < 9000; i++) {
+        starVerts[i] = (Math.random() - 0.5) * 80;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starVerts, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.02 });
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    // Sun
+    const sunGeo = new THREE.SphereGeometry(0.03, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffdd44 });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    scene.add(sun);
+
+    // Sun glow
+    const glowGeo = new THREE.SphereGeometry(0.06, 32, 32);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.2 });
+    scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+    // Ambient light
+    scene.add(new THREE.AmbientLight(0x333366));
+    const sunLight = new THREE.PointLight(0xffffff, 2, 20);
+    scene.add(sunLight);
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+}
+
+function createPlanet(name, color, size) {
+    const geo = new THREE.SphereGeometry(size, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ color });
+    const mesh = new THREE.Mesh(geo, mat);
+    scene.add(mesh);
+    planetMeshes[name] = mesh;
+
+    // Label
+    // (skip for simplicity — planet dots are enough)
+}
+
+function createOrbit(positions, color) {
+    const points = positions.map(p => new THREE.Vector3(p[1], p[3], p[2]));
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 });
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    return line;
+}
+
+function loadData() {
+    fetch('constellation_data.json')
+        .then(r => r.json())
+        .then(d => {
+            data = d;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('controls').style.display = 'flex';
+            setupScene();
+            animate();
+        })
+        .catch(e => {
+            document.getElementById('loading').textContent = 'Error loading data: ' + e;
+        });
+}
+
+function setupScene() {
+    // Create planets
+    createPlanet('venus', 0xffcc66, 0.012);
+    createPlanet('earth', 0x4488ff, 0.013);
+    createPlanet('mars', 0xff4422, 0.010);
+    createPlanet('jupiter', 0xddaa66, 0.025);
+
+    // Draw orbits from data
+    for (const name of ['venus', 'earth', 'mars', 'jupiter']) {
+        const positions = data.planets[name];
+        const colors = { venus: 0x665533, earth: 0x224488, mars: 0x662211, jupiter: 0x665522 };
+        createOrbit(positions, colors[name]);
+    }
+
+    // Create bucket dots
+    const bucketGeo = new THREE.SphereGeometry(0.004, 4, 4);
+    for (const bucket of data.buckets) {
+        const color = bucket.alive ? 0x00ff88 : 0xff2222;
+        const mat = new THREE.MeshBasicMaterial({ color });
+        const mesh = new THREE.Mesh(bucketGeo, mat);
+        mesh.visible = false;
+        mesh.userData = bucket;
+        scene.add(mesh);
+        bucketMeshes.push(mesh);
+    }
+
+    // Timeline range
+    document.getElementById('timeline').min = data.start_year * 10;
+    document.getElementById('timeline').max = data.end_year * 10;
+    document.getElementById('timeline').value = data.start_year * 10;
+}
+
+function getPlanetPos(name, year) {
+    const pts = data.planets[name];
+    if (!pts || pts.length === 0) return [0, 0, 0];
+
+    // Find bracketing points
+    let lo = 0, hi = pts.length - 1;
+    for (let i = 0; i < pts.length - 1; i++) {
+        if (pts[i][0] <= year && pts[i+1][0] >= year) { lo = i; hi = i+1; break; }
+    }
+    if (year <= pts[0][0]) return [pts[0][1], pts[0][2], pts[0][3]];
+    if (year >= pts[pts.length-1][0]) return [pts[pts.length-1][1], pts[pts.length-1][2], pts[pts.length-1][3]];
+
+    const t = (year - pts[lo][0]) / (pts[hi][0] - pts[lo][0]);
+    return [
+        pts[lo][1] + t * (pts[hi][1] - pts[lo][1]),
+        pts[lo][2] + t * (pts[hi][2] - pts[lo][2]),
+        pts[lo][3] + t * (pts[hi][3] - pts[lo][3])
+    ];
+}
+
+function getBucketPos(bucket, year) {
+    const wps = bucket.waypoints;
+    if (!wps || wps.length === 0) return null;
+    if (year < wps[0].year || year > wps[wps.length-1].year) return null;
+
+    let lo = 0, hi = wps.length - 1;
+    for (let i = 0; i < wps.length - 1; i++) {
+        if (wps[i].year <= year && wps[i+1].year >= year) { lo = i; hi = i+1; break; }
+    }
+
+    const t = (wps[hi].year - wps[lo].year) > 0.001
+        ? (year - wps[lo].year) / (wps[hi].year - wps[lo].year) : 0;
+
+    return {
+        x: wps[lo].x + t * (wps[hi].x - wps[lo].x),
+        y: wps[lo].y + t * (wps[hi].y - wps[lo].y),
+        z: wps[lo].z + t * (wps[hi].z - wps[lo].z),
+        phase: wps[lo].phase,
+        tank: wps[lo].tank + t * (wps[hi].tank - wps[lo].tank)
+    };
+}
+
+function getStats(year) {
+    if (!data.stats) return { launched: 0, active: 0, delivered: 0, lost: 0, he_tonnes: 0 };
+    let best = data.stats[0];
+    for (const s of data.stats) {
+        if (s.year <= year) best = s;
+    }
+    return best;
+}
+
+function updateScene(year) {
+    // Update planets
+    for (const name of ['venus', 'earth', 'mars', 'jupiter']) {
+        const pos = getPlanetPos(name, year);
+        if (planetMeshes[name]) {
+            planetMeshes[name].position.set(pos[0], pos[2], pos[1]);
+        }
+    }
+
+    // Update buckets
+    const phaseColors = {
+        'launch': 0x4488ff,
+        'venus_flyby': 0xffcc00,
+        'earth_flyby': 0x4488ff,
+        'outbound_jupiter': 0x00ff88,
+        'jupiter_arrive': 0xff8800,
+        'scooping': 0xff4400,
+        'depart_jupiter': 0x00ffcc,
+        'returning': 0x00ff88,
+        'delivered': 0x44ff44,
+        'lost': 0xff0000
+    };
+
+    for (const mesh of bucketMeshes) {
+        const bucket = mesh.userData;
+        const pos = getBucketPos(bucket, year);
+        if (pos) {
+            mesh.visible = true;
+            mesh.position.set(pos.x, pos.z, pos.y);
+            const color = phaseColors[pos.phase] || 0x00ff88;
+            mesh.material.color.setHex(color);
+
+            // Scale by tank fill
+            const s = 0.8 + (pos.tank / 100) * 1.5;
+            mesh.scale.setScalar(s);
+        } else {
+            mesh.visible = false;
+        }
+    }
+
+    // Update HUD
+    const stats = getStats(year);
+    document.getElementById('hudYear').textContent = year.toFixed(1);
+    document.getElementById('hudLaunched').textContent = stats.launched;
+    document.getElementById('hudActive').textContent = stats.active;
+    document.getElementById('hudDelivered').textContent = stats.delivered;
+    document.getElementById('hudLost').textContent = stats.lost;
+    document.getElementById('hudHe').textContent = stats.he_tonnes.toFixed(0);
+    document.getElementById('yearLabel').textContent = year.toFixed(1);
+    document.getElementById('timeline').value = year * 10;
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (playing && data) {
+        simYear += 0.005 * speed; // ~0.3 years per second at 60fps
+        if (simYear > data.end_year) simYear = data.start_year;
+        updateScene(simYear);
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+// Controls
+document.getElementById('btnPlay').addEventListener('click', () => {
+    playing = !playing;
+    document.getElementById('btnPlay').textContent = playing ? '⏸ Pause' : '▶ Play';
+});
+
+document.getElementById('btnSpeed').addEventListener('click', () => {
+    const speeds = [0.5, 1, 2, 5, 10];
+    const idx = (speeds.indexOf(speed) + 1) % speeds.length;
+    speed = speeds[idx];
+    document.getElementById('btnSpeed').textContent = speed + '×';
+});
+
+document.getElementById('timeline').addEventListener('input', (e) => {
+    simYear = parseFloat(e.target.value) / 10;
+    playing = false;
+    document.getElementById('btnPlay').textContent = '▶ Play';
+    if (data) updateScene(simYear);
+});
+
+// Go
+init();
+loadData();
+</script>
+</body>
+</html>
