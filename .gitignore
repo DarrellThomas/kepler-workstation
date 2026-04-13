@@ -1,0 +1,32 @@
+# Build artifacts
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+*.o
+*.so
+*.a
+
+# IDE
+.vscode/
+.idea/
+*.sln
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Private working notes
+Private/
+
+# Restricted applications (export control / licensing)
+Applications/MissileSim/
+
+# Large binary data (tracked via Git LFS or downloaded separately)
+Ephemeris/*.440
+Ephemeris/*.441
+
+# UE5 generated
+*.target
+*.modules
