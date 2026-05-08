@@ -68,6 +68,37 @@ static const CR3BPSystem SYS_JUPITER_CALLISTO={"Jupiter-Callisto",  5.667e-5,  1
 static const CR3BPSystem SYS_SATURN_TITAN   = {"Saturn-Titan",      2.366e-4,  1.222e6,  1.374e6};
 
 ///////////////////////////////////////////////////////////////////////////////
+// Celestial Body Physical Parameters
+// Source: JPL SSD, JUP365 ephemeris (Jacobson 2021)
+// https://ssd.jpl.nasa.gov/sats/phys_par/
+// https://ssd.jpl.nasa.gov/sats/elem/
+///////////////////////////////////////////////////////////////////////////////
+
+struct CelestialBody
+{
+    const char* name;
+    double GM;           // gravitational parameter (km^3/s^2)
+    double radius;       // mean radius (km)
+    double a;            // semi-major axis of orbit (km)
+    double ecc;          // orbital eccentricity
+    double period_days;  // orbital period (days)
+};
+
+// Jupiter system
+static const CelestialBody BODY_JUPITER   = {"Jupiter",   1.26713e8, 71492.0, 7.784e8,   0.0489, 4332.59};
+static const CelestialBody BODY_IO        = {"Io",        5959.916,  1821.49, 421800.0,  0.004,  1.769138};
+static const CelestialBody BODY_EUROPA    = {"Europa",    3202.712,  1560.80, 671100.0,  0.009,  3.551181};
+static const CelestialBody BODY_GANYMEDE  = {"Ganymede",  9887.833,  2631.20, 1070400.0, 0.001,  7.154553};
+static const CelestialBody BODY_CALLISTO  = {"Callisto",  7179.283,  2410.30, 1882700.0, 0.007,  16.689018};
+
+// Earth system
+static const CelestialBody BODY_EARTH     = {"Earth",     3.98600e5, 6371.0,  1.496e8,   0.0167, 365.256};
+static const CelestialBody BODY_MOON      = {"Moon",      4902.800,  1737.4,  384400.0,  0.0549, 27.322};
+
+// Sun
+static const CelestialBody BODY_SUN       = {"Sun",       1.32712e11, 696000.0, 0.0, 0.0, 0.0};
+
+///////////////////////////////////////////////////////////////////////////////
 // CR3BP State
 ///////////////////////////////////////////////////////////////////////////////
 
