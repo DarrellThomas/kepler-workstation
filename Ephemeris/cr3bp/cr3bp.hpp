@@ -286,7 +286,7 @@ struct CR3BPIntegrator
     double dt_max;
 
     CR3BPIntegrator()
-        : rtol(1e-12), atol(1e-14), dt_min(1e-12), dt_max(0.1) {}
+        : rtol(1e-12), atol(1e-14), dt_min(1e-12), dt_max(0.5) {}
 
     // Propagate state from t to t_target using adaptive RK4/5
     // Returns final time reached
@@ -408,7 +408,7 @@ private:
 
 // Propagate CR3BPState for time dt (nondimensional)
 inline CR3BPState cr3bp_propagate(double mu, const CR3BPState& s0, double dt,
-                                  double step = 0.001)
+                                  double step = 0.01)
 {
     double s[6];
     s0.to_array(s);
@@ -422,7 +422,7 @@ inline CR3BPState cr3bp_propagate(double mu, const CR3BPState& s0, double dt,
 // Propagate with STM, returns final state and STM
 inline CR3BPState cr3bp_propagate_stm(double mu, const CR3BPState& s0,
                                       double dt, double phi[6][6],
-                                      double step = 0.001)
+                                      double step = 0.01)
 {
     double s[42];
     cr3bp_stm_identity(s, s0);
@@ -454,7 +454,7 @@ inline std::vector<CR3BPState> cr3bp_propagate_record(
     traj.push_back(st);
 
     for (int i = 0; i < n_points; i++) {
-        t = integ.propagate(cr3bp_eom, mu, s, 6, t, t + dt_out, step);
+        t = integ.propagate(cr3bp_eom, mu, s, 6, t, t + dt_out, fabs(step));
         st.from_array(s);
         traj.push_back(st);
     }
