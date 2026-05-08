@@ -109,7 +109,32 @@ Not because the tools got easier. Because the collaboration got smarter.
    - HypersonicEntry: Earth/Mars/Jupiter entry corridor analysis
    - Each with its own README, input files, expected output
 
-7. **GPU compute** (`Engine/KeplerWorkstation/Source/.../GPU/`)
+7. **Three-Body Dynamics & Low-Energy Mission Design** (`Ephemeris/cr3bp/`)
+   Ref: Koon, Lo, Marsden, Ross — "Dynamical Systems, the Three-Body Problem
+   and Space Mission Design" (2011), available in `docs/`
+   - CR3BP equations of motion (rotating/synodic frame propagation)
+   - Lagrange point computation (L1-L5 for any two-body pair)
+   - Halo orbit computation (Richardson 3rd-order + differential correction)
+   - Invariant manifold propagation (stable/unstable tubes around periodic orbits)
+   - Patched three-body transfers (connect manifold tubes across systems)
+   - Multi-moon resonant transfers (Jovian moons — directly relevant to Bucket fleet)
+   - Low-thrust trajectory arcs on manifolds (Hall thruster integration)
+   - Cleanroom C++ implementation from published algorithms:
+     - Richardson (1980): 3rd-order halo orbit approximation
+     - Howell (1984): numerical continuation of halo families
+     - KoLoMaRo (2011): manifold computation, heteroclinic connections
+   - Validation tools:
+     - HITEN (MIT, Python): prototyping & validation of CR3BP/manifolds
+       `pip install hiten` — halo orbits, manifold tubes, continuation
+     - NASA GMAT (Apache 2.0): high-fidelity secondary validation oracle
+       R2026a, flight-proven on Artemis/TESS/OSIRIS-REx
+   - Integration: wire into UE5 OrbitalMechanicsComponent for visualization
+   - **Impact on Jupiter Harvester:**
+     - Sun-Jupiter L1/L2 manifold tubes for low-energy capture/escape
+     - Ganymede/Callisto resonant gravity assists for scoop orbit insertion
+     - Potentially massive delta-V savings → less propellant → more He per trip
+
+8. **GPU compute** (`Engine/KeplerWorkstation/Source/.../GPU/`)
    - CUDA kernels: batch Lambert solver, Monte Carlo propagation
    - UE5 compute shader fallback for non-CUDA
    - 1000× speedup on constellation fleet sim

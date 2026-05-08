@@ -22,6 +22,16 @@
 - [ ] Create UE5 project template (KeplerWorkstation.uproject) with example scene
 - [ ] Build OrbitalTransfer example application (Earth-Mars Hohmann, porkchop plot)
 - [ ] Build HypersonicEntry example application
+- [ ] **CR3BP / Low-Energy Mission Design module** (Ephemeris/cr3bp/)
+  - [ ] CR3BP equations of motion (synodic frame, nondimensional)
+  - [ ] Lagrange point solver (L1-L5, any mass ratio)
+  - [ ] Halo orbit computation (Richardson 3rd-order + differential correction)
+  - [ ] Invariant manifold propagation (stable/unstable tubes)
+  - [ ] Patched three-body transfers (connect manifold tubes across systems)
+  - [ ] Multi-moon resonant transfers (Jupiter system: Io/Europa/Ganymede/Callisto)
+  - [ ] Validate against HITEN (Python, `pip install hiten`) and/or NASA GMAT
+  - [ ] Wire CR3BP into UE5 OrbitalMechanicsComponent
+  - [ ] Re-evaluate Jupiter Harvester delta-V budget with manifold-based transfers
 - [ ] Add GPU compute support (CUDA kernels for Monte Carlo and batch Lambert)
 
 ### Milestone 3: Education
@@ -31,6 +41,7 @@
 - [ ] Write Tutorial 3: "Atmospheric entry" (drag, heating, TPS)
 - [ ] Write Tutorial 4: "Design a mission" (full VEEJ trajectory)
 - [ ] Write Tutorial 5: "Build a constellation" (fleet, attrition, economics)
+- [ ] Write Tutorial 6: "Three-body dynamics" (CR3BP, Lagrange points, halo orbits, manifolds — ref: KoLoMaRo book in docs/)
 - [ ] Add inline documentation to all component headers (WHAT/WHY/WHERE)
 
 ### Milestone 4: The Message
