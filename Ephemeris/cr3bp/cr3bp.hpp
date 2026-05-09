@@ -65,7 +65,10 @@ static const CR3BPSystem SYS_JUPITER_IO     = {"Jupiter-Io",        4.704e-5,  4
 static const CR3BPSystem SYS_JUPITER_EUROPA = {"Jupiter-Europa",    2.528e-5,  6.711e5,  3.060e5};
 static const CR3BPSystem SYS_JUPITER_GANYMEDE={"Jupiter-Ganymede",  7.804e-5,  1.070e6,  6.165e5};
 static const CR3BPSystem SYS_JUPITER_CALLISTO={"Jupiter-Callisto",  5.667e-5,  1.883e6,  1.438e6};
-static const CR3BPSystem SYS_SATURN_TITAN   = {"Saturn-Titan",      2.366e-4,  1.222e6,  1.374e6};
+static const CR3BPSystem SYS_SATURN_TITAN    = {"Saturn-Titan",      2.366e-4,  1.222e6,  1.374e6};
+static const CR3BPSystem SYS_SATURN_ENCELADUS={"Saturn-Enceladus",  1.901e-7,  2.380e5,  1.184e5};
+static const CR3BPSystem SYS_SATURN_RHEA    = {"Saturn-Rhea",       4.058e-6,  5.271e5,  3.903e5};
+static const CR3BPSystem SYS_SATURN_DIONE   = {"Saturn-Dione",      1.927e-6,  3.774e5,  2.364e5};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Celestial Body Physical Parameters
@@ -94,6 +97,17 @@ static const CelestialBody BODY_CALLISTO  = {"Callisto",  7179.283,  2410.30, 18
 // Earth system
 static const CelestialBody BODY_EARTH     = {"Earth",     3.98600e5, 6371.0,  1.496e8,   0.0167, 365.256};
 static const CelestialBody BODY_MOON      = {"Moon",      4902.800,  1737.4,  384400.0,  0.0549, 27.322};
+
+// Saturn system
+// Source: JPL SSD, Cassini mission (Jacobson et al. 2006, 2008)
+static const CelestialBody BODY_SATURN    = {"Saturn",    3.7931e7,  60268.0,  1.4267e9,  0.0565, 10759.22};
+static const CelestialBody BODY_MIMAS     = {"Mimas",     2.504,     198.2,   185539.0,  0.020,  0.942};
+static const CelestialBody BODY_ENCELADUS = {"Enceladus", 7.211,     252.1,   238042.0,  0.005,  1.370};
+static const CelestialBody BODY_TETHYS    = {"Tethys",    41.21,     533.0,   294672.0,  0.001,  1.888};
+static const CelestialBody BODY_DIONE     = {"Dione",     73.11,     561.4,   377415.0,  0.002,  2.737};
+static const CelestialBody BODY_RHEA      = {"Rhea",      153.94,    764.3,   527068.0,  0.001,  4.518};
+static const CelestialBody BODY_TITAN     = {"Titan",     8978.14,   2574.7,  1221870.0, 0.029,  15.945};
+static const CelestialBody BODY_IAPETUS   = {"Iapetus",   120.51,    735.6,   3560854.0, 0.029,  79.322};
 
 // Sun
 static const CelestialBody BODY_SUN       = {"Sun",       1.32712e11, 696000.0, 0.0, 0.0, 0.0};

@@ -116,6 +116,36 @@ static const double JUPITER_J8  =     -2.426e-6;
 static const double JUPITER_J9  =     -0.108e-6;
 static const double JUPITER_J10 =      0.172e-6;
 
+// Saturn
+// Source: Cassini Grand Finale (Iess et al. 2019, Science 364:eaat2965)
+// Atmosphere: Voyager 1/2 RSS (Lindal 1992), Cassini CIRS (Flasar et al. 2005)
+static const double SATURN_GM      = 3.7931187e16;  // m^3/s^2 (Jacobson et al. 2006)
+static const double SATURN_RADIUS  = 60268000.0;    // m (equatorial, 1-bar level)
+static const double SATURN_RGAS    = 3892.0;        // J/(kg·K) (H2 96.3%, He 3.25%, M=2.07 g/mol)
+static const double SATURN_GAMMA   = 1.40;          // ratio of specific heats (H2-dominated)
+static const double SATURN_G0      = 10.44;         // m/s^2 surface gravity (1-bar equator)
+
+// Saturn gravity zonal harmonics (×10^6, unnormalized)
+// Source: Iess et al. 2019 (Cassini Grand Finale, Science 364:eaat2965)
+static const double SATURN_J2  =  16290.573e-6;
+static const double SATURN_J4  =   -935.314e-6;
+static const double SATURN_J6  =     86.340e-6;
+static const double SATURN_J8  =    -14.624e-6;
+static const double SATURN_J10 =      4.672e-6;
+
+// Titan
+// Source: Cassini-Huygens (Niemann et al. 2005, Fulchignoni et al. 2005)
+static const double TITAN_GM       = 8.978138e12;   // m^3/s^2
+static const double TITAN_RADIUS   = 2574700.0;     // m (mean radius)
+static const double TITAN_RGAS     = 296.8;         // J/(kg·K) (N2 95%, CH4 5%, M=28.0 g/mol)
+static const double TITAN_GAMMA    = 1.40;          // ratio of specific heats (N2-dominated)
+static const double TITAN_G0       = 1.352;         // m/s^2 surface gravity
+
+// Enceladus
+static const double ENCELADUS_GM     = 7.211e9;     // m^3/s^2
+static const double ENCELADUS_RADIUS = 252100.0;    // m (mean radius)
+static const double ENCELADUS_G0     = 0.113;       // m/s^2 surface gravity
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // VENUS ATMOSPHERE MODEL
@@ -278,6 +308,134 @@ inline void atmosphere_jupiter(double &rho, double &press, double &tempk, const 
 
     // Density from ideal gas law
     rho = press / (JUPITER_RGAS * tempk);
+
+    if (rho < 0.0) rho = 0.0;
+    if (press < 0.0) press = 0.0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// SATURN ATMOSPHERE MODEL
+///////////////////////////////////////////////////////////////////////////////
+// Based on Voyager 1/2 radio occultation (Lindal et al. 1985, AJ 90:1136)
+// and Cassini CIRS (Flasar et al. 2005, Science 307:1247),
+// Cassini INMS thermosphere (Koskinen et al. 2018, Icarus 307:161)
+//
+// Composition: 96.3% H2, 3.25% He, 0.45% CH4 by volume
+// Mass fractions: 90.6% H2, 6.1% He, 3.4% CH4
+// (Conrath & Gautier 2000 — He abundance from Voyager IRIS reanalysis)
+//
+// Note: Saturn has much LOWER He fraction than Jupiter (3.25% vs 13.6%
+// by volume) because He rain-out depletes the outer envelope.
+//
+// Temperature profile:
+//   Thermosphere (>300 km): warming from UV/particle heating
+//   Stratosphere (60-300 km): inversion, warming from CH4 absorption
+//   Tropopause (60 km): cold trap ~82 K
+//   Troposphere (0-60 km): convective, lapse ~0.9 K/km
+//   Deep (-200 to 0 km): dry/moist adiabat
+//
+// Altitude reference: 1-bar pressure level (0 km)
+///////////////////////////////////////////////////////////////////////////////
+
+// Saturn temperature at altitude (helper for layered integration)
+inline double saturn_temperature_km(double h_km)
+{
+    if (h_km > 300.0)
+        return 160.0 + 0.5 * (h_km - 300.0);      // thermosphere
+    else if (h_km > 60.0)
+        return 82.0 + 0.325 * (h_km - 60.0);       // stratosphere
+    else if (h_km > 0.0)
+        return 134.0 - 0.867 * h_km;                // upper troposphere
+    else if (h_km > -60.0)
+        return 134.0 - 0.74 * h_km;                 // mid troposphere (dry adiabat)
+    else
+        return 178.4 - 0.9 * (h_km + 60.0);         // deep troposphere
+}
+
+inline void atmosphere_saturn(double &rho, double &press, double &tempk, const double balt)
+{
+    double h_km = balt / 1000.0;
+    double P0 = 1.0e5;     // Pa at 1-bar reference level
+
+    tempk = saturn_temperature_km(h_km);
+
+    // Layered hydrostatic integration: P(h) = P0 * exp(-integral g/(R*T) dh)
+    // Integrate from 0 to h_km in 1-km steps for accuracy through the
+    // cold tropopause (82 K at 60 km) where scale height drops to ~30 km.
+    double integral = 0.0;
+    double step = 1.0;  // km
+
+    if (h_km >= 0.0) {
+        for (double h = 0.0; h < h_km; h += step) {
+            double dh = step;
+            if (h + dh > h_km) dh = h_km - h;
+            double T_mid = saturn_temperature_km(h + dh * 0.5);
+            double H_m = SATURN_RGAS * T_mid / SATURN_G0;
+            integral += dh * 1000.0 / H_m;
+        }
+        press = P0 * exp(-integral);
+    } else {
+        for (double h = 0.0; h > h_km; h -= step) {
+            double dh = step;
+            if (h - dh < h_km) dh = h - h_km;
+            double T_mid = saturn_temperature_km(h - dh * 0.5);
+            double H_m = SATURN_RGAS * T_mid / SATURN_G0;
+            integral += dh * 1000.0 / H_m;
+        }
+        press = P0 * exp(integral);
+    }
+
+    rho = press / (SATURN_RGAS * tempk);
+
+    if (rho < 0.0) rho = 0.0;
+    if (press < 0.0) press = 0.0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TITAN ATMOSPHERE MODEL
+///////////////////////////////////////////////////////////////////////////////
+// Based on Cassini-Huygens descent (Fulchignoni et al. 2005, Nature 438:785)
+// Dense N2 atmosphere, 1.47 bar surface, 94 K surface
+// Composition: 95% N2, 5% CH4 (by volume at surface, CH4 varies with alt)
+//
+// Altitude reference: surface (0 km)
+///////////////////////////////////////////////////////////////////////////////
+
+inline void atmosphere_titan(double &rho, double &press, double &tempk, const double balt)
+{
+    double h_km = balt / 1000.0;
+
+    // Surface: 94 K, 1.47 bar
+    double T0 = 94.0;
+    double P0 = 1.47e5;    // Pa
+
+    if (h_km > 250.0)
+    {
+        // Thermosphere: T rises above 250 km
+        tempk = 170.0 + 0.1 * (h_km - 250.0);
+    }
+    else if (h_km > 40.0)
+    {
+        // Stratosphere/mesosphere: tropopause ~70 K at 40 km, then warming
+        // Stratopause ~185 K at ~250 km
+        tempk = 70.0 + (170.0 - 70.0) / (250.0 - 40.0) * (h_km - 40.0);
+    }
+    else if (h_km > 0.0)
+    {
+        // Troposphere: lapse ~1.2 K/km (Huygens HASI)
+        tempk = 94.0 - 0.6 * h_km; // gentler than dry adiabat
+    }
+    else
+    {
+        tempk = 94.0;
+    }
+
+    double scale_height = TITAN_RGAS * tempk / TITAN_G0;
+    press = P0 * exp(-balt / scale_height);
+
+    rho = press / (TITAN_RGAS * tempk);
 
     if (rho < 0.0) rho = 0.0;
     if (press < 0.0) press = 0.0;
@@ -617,6 +775,65 @@ inline void gravity_jupiter(double gravg[3], const double pos[3])
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// SATURN GRAVITY MODEL (J2-J10, Cassini Grand Finale)
+///////////////////////////////////////////////////////////////////////////////
+// Zonal harmonic gravity field for Saturn
+// Based on Iess et al. 2019 (Cassini Grand Finale, Science 364:eaat2965)
+// Even harmonics only — odd harmonics negligibly small for Saturn
+//
+// Arguments:
+//   gravg[3] — output: gravitational acceleration (geocentric) m/s^2
+//   pos[3]   — input: position in planet-centered inertial coords (m)
+///////////////////////////////////////////////////////////////////////////////
+
+inline void gravity_saturn(double gravg[3], const double pos[3])
+{
+    double x = pos[0], y = pos[1], z = pos[2];
+    double r = sqrt(x*x + y*y + z*z);
+    if (r < 1.0) { gravg[0]=0; gravg[1]=0; gravg[2]=0; return; }
+
+    double mu_r2 = SATURN_GM / (r * r);
+    double a_r = SATURN_RADIUS / r;
+    double sinlat = z / r;
+    double coslat = sqrt(x*x + y*y) / r;
+    double s2 = sinlat * sinlat;
+
+    double P2  = 0.5 * (3.0*s2 - 1.0);
+    double P4  = (1.0/8.0) * (35.0*s2*s2 - 30.0*s2 + 3.0);
+    double P6  = (1.0/16.0) * (231.0*pow(sinlat,6) - 315.0*s2*s2 + 105.0*s2 - 5.0);
+    double P8  = (1.0/128.0) * (6435.0*pow(sinlat,8) - 12012.0*pow(sinlat,6)
+                  + 6930.0*s2*s2 - 1260.0*s2 + 35.0);
+    double P10 = (1.0/256.0) * (46189.0*pow(sinlat,10) - 109395.0*pow(sinlat,8)
+                  + 90090.0*pow(sinlat,6) - 30030.0*s2*s2 + 3465.0*s2 - 63.0);
+
+    double a_r2 = a_r * a_r;
+    double a_r4 = a_r2 * a_r2;
+    double a_r6 = a_r4 * a_r2;
+    double a_r8 = a_r4 * a_r4;
+    double a_r10 = a_r8 * a_r2;
+
+    double radial_sum = 1.0
+        + 3.0 * SATURN_J2 * a_r2 * P2
+        + 5.0 * SATURN_J4 * a_r4 * P4
+        + 7.0 * SATURN_J6 * a_r6 * P6
+        + 9.0 * SATURN_J8 * a_r8 * P8
+        + 11.0 * SATURN_J10 * a_r10 * P10;
+
+    double g_radial = -mu_r2 * radial_sum;
+    double g_lat = -mu_r2 * 3.0 * SATURN_J2 * a_r2 * sinlat * coslat;
+
+    double r_xy = sqrt(x*x + y*y);
+    if (r_xy < 1.0) r_xy = 1.0;
+    double rx = x/r, ry = y/r, rz = z/r;
+    double lx = -sinlat * x / r_xy, ly = -sinlat * y / r_xy, lz = coslat;
+
+    gravg[0] = g_radial * rx + g_lat * lx;
+    gravg[1] = g_radial * ry + g_lat * ly;
+    gravg[2] = g_radial * rz + g_lat * lz;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // SPEED OF SOUND (generic, for Mach number computation)
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -633,6 +850,16 @@ inline double speed_of_sound_mars(double tempk)
 inline double speed_of_sound_jupiter(double tempk)
 {
     return sqrt(JUPITER_GAMMA * JUPITER_RGAS * tempk);
+}
+
+inline double speed_of_sound_saturn(double tempk)
+{
+    return sqrt(SATURN_GAMMA * SATURN_RGAS * tempk);
+}
+
+inline double speed_of_sound_titan(double tempk)
+{
+    return sqrt(TITAN_GAMMA * TITAN_RGAS * tempk);
 }
 
 #endif // PLANETARY_ENVIRONMENT_HPP
