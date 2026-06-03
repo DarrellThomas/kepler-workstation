@@ -146,6 +146,100 @@ static const double ENCELADUS_GM     = 7.211e9;     // m^3/s^2
 static const double ENCELADUS_RADIUS = 252100.0;    // m (mean radius)
 static const double ENCELADUS_G0     = 0.113;       // m/s^2 surface gravity
 
+// Earth atmosphere constants (US Standard Atmosphere 1976)
+static const double EARTH_RGAS      = 287.058;      // J/(kg·K) (dry air, M=28.964 g/mol)
+static const double EARTH_GAMMA     = 1.40;         // ratio of specific heats (air)
+static const double EARTH_G0        = 9.80665;      // m/s^2 standard gravity
+
+// Neptune
+// Source: Voyager 2 RSS (Lindal et al. 1990, JGR 95:16949); Conrath et al. 1991
+// Composition: ~80% H2, ~19% He, ~1.5% CH4 by volume
+static const double NEPTUNE_GM      = 6.835100e15;  // m^3/s^2
+static const double NEPTUNE_RADIUS  = 24764000.0;    // m (equatorial, 1-bar level)
+static const double NEPTUNE_RGAS    = 3615.0;        // J/(kg·K) (M≈2.30 g/mol)
+static const double NEPTUNE_GAMMA   = 1.43;          // ratio of specific heats (H2-dominated)
+static const double NEPTUNE_G0      = 11.15;         // m/s^2 surface gravity (1-bar level)
+
+// Uranus
+// Source: Voyager 2 RSS (Lindal et al. 1987, JGR 92:14987)
+// Composition: ~83% H2, ~15% He, ~2% CH4 by volume
+// Note: Uranus has negligible internal heat flux (unlike all other giants)
+static const double URANUS_GM       = 5.793951e15;  // m^3/s^2
+static const double URANUS_RADIUS   = 25559000.0;    // m (equatorial, 1-bar level)
+static const double URANUS_RGAS     = 3641.0;        // J/(kg·K) (M≈2.28 g/mol)
+static const double URANUS_GAMMA    = 1.43;          // ratio of specific heats (H2-dominated)
+static const double URANUS_G0       = 8.87;          // m/s^2 surface gravity (1-bar level)
+
+
+///////////////////////////////////////////////////////////////////////////////
+// EARTH ATMOSPHERE MODEL — US Standard Atmosphere 1976
+///////////////////////////////////////////////////////////////////////////////
+// 7-layer model: troposphere → tropopause → stratosphere → stratopause →
+//               mesosphere. Geopotential altitude to 84.85 km.
+// Ref: NOAA-S/T 76-1562, "U.S. Standard Atmosphere, 1976"
+//
+// Altitude reference: mean sea level (0 km)
+///////////////////////////////////////////////////////////////////////////////
+
+inline void atmosphere_earth(double &rho, double &press, double &tempk, const double balt)
+{
+    double h_km = balt / 1000.0;
+    if (h_km < 0.0) h_km = 0.0;
+    if (h_km > 84.852) h_km = 84.852;
+
+    const double R = 287.058;    // J/(kg·K)
+    const double g0 = 9.80665;   // m/s²
+    const double P0 = 101325.0;  // Pa
+
+    // Layer boundaries (geopotential km) and lapse rates (K/km)
+    static const double H[8]  = {0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852};
+    static const double LR[7] = {-6.5, 0.0, 1.0, 2.8, 0.0, -2.8, -2.0};
+    static const double Tb[7] = {288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65};
+
+    // Find layer
+    int i = 0;
+    for (int k = 1; k < 7; k++) {
+        if (h_km >= H[k]) i = k;
+    }
+
+    double h_base = H[i];
+    double lapse  = LR[i];
+    double T_base = Tb[i];
+
+    // Temperature
+    if (fabs(lapse) < 1e-9) {
+        tempk = T_base;
+    } else {
+        tempk = T_base + lapse * (h_km - h_base);
+    }
+
+    // Pressure: integrate hydrostatic equation through prior layers
+    // Use base pressure at the bottom layer
+    double P_base = P0;
+    for (int k = 0; k < i; k++) {
+        double dh = H[k+1] - H[k];
+        if (fabs(LR[k]) < 1e-9) {
+            P_base *= exp(-g0 * dh * 1000.0 / (R * Tb[k]));
+        } else {
+            double T_top = Tb[k] + LR[k] * dh;
+            P_base *= pow(T_top / Tb[k], -g0 / (R * LR[k] * 0.001));
+        }
+    }
+
+    // Pressure at altitude within current layer
+    double dh = h_km - h_base;
+    if (fabs(lapse) < 1e-9) {
+        press = P_base * exp(-g0 * dh * 1000.0 / (R * T_base));
+    } else {
+        double T_top = T_base + lapse * dh;
+        press = P_base * pow(T_top / T_base, -g0 / (R * lapse * 0.001));
+    }
+
+    rho = press / (R * tempk);
+    if (rho < 0.0) rho = 0.0;
+    if (press < 0.0) press = 0.0;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // VENUS ATMOSPHERE MODEL
@@ -436,6 +530,97 @@ inline void atmosphere_titan(double &rho, double &press, double &tempk, const do
     press = P0 * exp(-balt / scale_height);
 
     rho = press / (TITAN_RGAS * tempk);
+
+    if (rho < 0.0) rho = 0.0;
+    if (press < 0.0) press = 0.0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// NEPTUNE ATMOSPHERE MODEL
+///////////////////////////////////////////////////////////////////////////////
+// Based on Voyager 2 radio occultation (Lindal et al. 1990, JGR 95:16949)
+// and ground-based IR observations (Conrath et al. 1991).
+//
+// Composition: ~80% H2, ~19% He, ~1.5% CH4 by volume
+// Temperature: ~55 K at tropopause (~100 mbar, ~50 km), ~72 K at 1-bar
+// Neptune has the strongest internal heat flux of any outer planet (2.6× solar).
+//
+// Altitude reference: 1-bar pressure level (0 km)
+///////////////////////////////////////////////////////////////////////////////
+
+inline void atmosphere_neptune(double &rho, double &press, double &tempk, const double balt)
+{
+    double h_km = balt / 1000.0;
+
+    // Reference at 1-bar level
+    double T0 = 72.0;     // K at 1 bar
+    double P0 = 1.0e5;    // Pa (1 bar)
+
+    if (h_km > 50.0)
+    {
+        // Stratosphere/thermosphere: warming above tropopause
+        tempk = 55.0 + 0.4 * (h_km - 50.0);
+    }
+    else if (h_km > 0.0)
+    {
+        // Upper troposphere: tropopause (55 K) to 1-bar (72 K)
+        tempk = 72.0 - 0.34 * h_km;
+    }
+    else
+    {
+        // Deep troposphere: continues warming downward
+        tempk = 72.0 - 0.9 * h_km;
+    }
+
+    double scale_height = NEPTUNE_RGAS * tempk / NEPTUNE_G0;
+    press = P0 * exp(-balt / scale_height);
+    rho = press / (NEPTUNE_RGAS * tempk);
+
+    if (rho < 0.0) rho = 0.0;
+    if (press < 0.0) press = 0.0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// URANUS ATMOSPHERE MODEL
+///////////////////////////////////////////////////////////////////////////////
+// Based on Voyager 2 radio occultation (Lindal et al. 1987, JGR 92:14987).
+//
+// Composition: ~83% H2, ~15% He, ~2% CH4 by volume
+// Temperature: ~53 K at tropopause (~110 mbar, ~50 km), ~76 K at 1-bar
+// Uranus has negligible internal heat flux — unique among giant planets.
+// Its atmosphere is the coldest planetary atmosphere in the solar system.
+//
+// Altitude reference: 1-bar pressure level (0 km)
+///////////////////////////////////////////////////////////////////////////////
+
+inline void atmosphere_uranus(double &rho, double &press, double &tempk, const double balt)
+{
+    double h_km = balt / 1000.0;
+
+    double T0 = 76.0;     // K at 1 bar
+    double P0 = 1.0e5;    // Pa (1 bar)
+
+    if (h_km > 50.0)
+    {
+        // Stratosphere: very gradual warming
+        tempk = 53.0 + 0.3 * (h_km - 50.0);
+    }
+    else if (h_km > 0.0)
+    {
+        // Upper troposphere: tropopause (53 K) to 1-bar (76 K)
+        tempk = 76.0 - 0.46 * h_km;
+    }
+    else
+    {
+        // Deep troposphere
+        tempk = 76.0 - 0.8 * h_km;
+    }
+
+    double scale_height = URANUS_RGAS * tempk / URANUS_G0;
+    press = P0 * exp(-balt / scale_height);
+    rho = press / (URANUS_RGAS * tempk);
 
     if (rho < 0.0) rho = 0.0;
     if (press < 0.0) press = 0.0;
