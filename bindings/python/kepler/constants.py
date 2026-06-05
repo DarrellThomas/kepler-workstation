@@ -1,0 +1,61 @@
+# Physical constants — all units SI (m, kg, s) unless noted
+
+import math
+
+# Gravitational parameters (m³/s²)
+GM_SUN     = 1.32712440018e20
+GM_EARTH   = 3.986004418e14
+GM_VENUS   = 3.24859e14
+GM_MARS    = 4.282837e13
+GM_JUPITER = 1.26686534e17
+GM_SATURN  = 3.7931187e16
+GM_TITAN   = 8.978138e12
+GM_NEPTUNE = 6.835100e15
+GM_URANUS  = 5.793951e15
+GM_MOON    = 4.9028e12
+
+# Radii (m)
+R_EARTH   = 6378137.0
+R_VENUS   = 6051800.0
+R_MARS    = 3396200.0
+R_JUPITER = 71492000.0
+R_SATURN  = 60268000.0
+R_TITAN   = 2574700.0
+R_NEPTUNE = 24764000.0
+R_URANUS  = 25559000.0
+R_MOON    = 1738100.0
+
+# Surface gravity (m/s²)
+G0_EARTH   = 9.80665
+G0_VENUS   = 8.87
+G0_MARS    = 3.71
+G0_JUPITER = 24.79
+G0_SATURN  = 10.44
+G0_TITAN   = 1.352
+G0_NEPTUNE = 11.15
+G0_URANUS  = 8.87
+G0_MOON    = 1.62
+
+# Semi-major axes (m)
+SMA_EARTH   = 1.00000011 * 149597870700.0
+SMA_MARS    = 1.523679   * 149597870700.0
+SMA_JUPITER = 5.203363   * 149597870700.0
+SMA_SATURN  = 9.536676   * 149597870700.0
+
+# Orbital periods (seconds)
+PERIOD_EARTH   = 365.25 * 86400.0
+PERIOD_MARS    = 686.98 * 86400.0
+PERIOD_JUPITER = 4332.59 * 86400.0
+PERIOD_SATURN  = 10759.22 * 86400.0
+
+# Standard gravity
+G0 = 9.80665
+
+# Speed of light (reference)
+C = 299792458.0
+
+# AU
+AU = 149597870700.0
+
+# Julian date reference
+JD_J2000 = 2451545.0
