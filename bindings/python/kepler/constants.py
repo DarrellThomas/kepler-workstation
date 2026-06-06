@@ -1,7 +1,5 @@
 # Physical constants — all units SI (m, kg, s) unless noted
 
-import math
-
 # Gravitational parameters (m³/s²)
 GM_SUN     = 1.32712440018e20
 GM_EARTH   = 3.986004418e14

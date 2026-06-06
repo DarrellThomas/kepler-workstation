@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, '../../bindings/python')
 import numpy as np
 import matplotlib.pyplot as plt
-from kepler.constants import GM_SUN, SMA_EARTH, SMA_MARS, AU
+from kepler.constants import GM_SUN, GM_EARTH, GM_MARS, SMA_EARTH, SMA_MARS, R_EARTH, R_MARS
 from kepler.orbit import hohmann_transfer
 from kepler.transfer import porkchop_sweep
 
@@ -72,10 +72,12 @@ ax.clabel(c, inline=True, fontsize=8, fmt='%.0f')
 ax.axhline(259, color='red', linestyle='--', alpha=0.7, label=f'Ideal Hohmann TOF ({h["tof_days"]:.0f} days)')
 
 cbar = plt.colorbar(cs, ax=ax, label='C3 (km²/s²)')
-ax.set_xlabel('Departure Year'); ax.set_ylabel('Time of Flight (days)')
+ax.set_xlabel('Departure Year')
+ax.set_ylabel('Time of Flight (days)')
 ax.set_title('Earth → Mars Porkchop Plot   (Kepler Workstation)')
 ax.legend(loc='upper right')
-plt.tight_layout(); plt.show()
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
 # ## Best Windows
@@ -88,7 +90,7 @@ best_tof = tof_days[min_idx[0]]
 best_year = departure_years[min_idx[1]]
 best_c3 = c3_grid[min_idx]
 
-print(f"Best transfer window:")
+print("Best transfer window:")
 print(f"  Departure: {best_year:.2f}")
 print(f"  TOF:       {best_tof:.0f} days")
 print(f"  C3:        {best_c3:.2f} km²/s²")
@@ -105,10 +107,12 @@ min_c3_per_year = np.nanmin(c3_grid, axis=0)
 
 fig, ax = plt.subplots(figsize=(12, 4))
 ax.plot(departure_years, min_c3_per_year, 'b-', linewidth=1.5)
-ax.set_xlabel('Departure Year'); ax.set_ylabel('Minimum C3 (km²/s²)')
+ax.set_xlabel('Departure Year')
+ax.set_ylabel('Minimum C3 (km²/s²)')
 ax.set_title('Best Earth→Mars C3 by Departure Year')
 ax.grid(True, alpha=0.3)
-plt.tight_layout(); plt.show()
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
 # ## Next

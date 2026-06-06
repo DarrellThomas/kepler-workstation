@@ -15,7 +15,6 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import brentq
 import subprocess
-import json
 import sys
 
 # ===========================================================================
@@ -195,7 +194,7 @@ def main():
         pos_err = np.sqrt((sf[0]-ic[0])**2 + (sf[1]-ic[1])**2 + (sf[2]-ic[2])**2)
         vel_err = np.sqrt((sf[3]-ic[3])**2 + (sf[4]-ic[4])**2 + (sf[5]-ic[5])**2)
 
-        print(f"\n  Python propagation of C++ IC for period T:")
+        print("\n  Python propagation of C++ IC for period T:")
         print(f"    Position return error: {pos_err:.2e}")
         print(f"    Velocity return error: {vel_err:.2e}")
 

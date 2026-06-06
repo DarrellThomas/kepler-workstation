@@ -46,7 +46,7 @@ attrition_per_loop  = 0.10  # 10% per loop
 
 print("The Bucket — Jupiter Helium Harvester")
 print(f"  Dry mass:       {dry_mass_kg/1000:.0f} t")
-print(f"  Magnet:         20T HTS superconducting")
+print("  Magnet:         20T HTS superconducting")
 print(f"  Thruster:       Hall effect, Isp={isp_s}s")
 print(f"  Loop duration:  {loop_years} years")
 print(f"  He per loop:    {he_per_loop_kg/1000:.1f} t")
@@ -92,7 +92,8 @@ class Bucket:
         self.return_year = launch_year + loop_years  # first return
     
     def complete_loop(self):
-        if not self.active: return
+        if not self.active:
+            return
         self.loops_completed += 1
         self.he_delivered += he_per_loop_kg
         self.h2_delivered += h2_per_loop_kg
@@ -116,7 +117,8 @@ cumulative_he = np.zeros(len(sim_years))
 
 for y_idx, year in enumerate(sim_years):
     for b in buckets:
-        if not b.active: continue
+        if not b.active:
+            continue
         # Check if this bucket returns this year
         if abs(b.return_year - year) < 0.5 and b.loops_completed == 0:
             b.complete_loop()
@@ -145,37 +147,47 @@ fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 ax = axes[0, 0]
 ax.plot(sim_years, active_fleet, 'b-', linewidth=2)
 ax.axvline(2026 + 10, color='red', linestyle='--', alpha=0.5, label='First returns (~2036)')
-ax.set_xlabel('Year'); ax.set_ylabel('Active Buckets')
-ax.set_title('Active Fleet Size'); ax.grid(True, alpha=0.3); ax.legend()
+ax.set_xlabel('Year')
+ax.set_ylabel('Active Buckets')
+ax.set_title('Active Fleet Size')
+ax.grid(True, alpha=0.3)
+ax.legend()
 
 # Annual helium
 ax = axes[0, 1]
 ax.bar(sim_years, annual_he/1000, width=0.8, color='gold', edgecolor='orange', alpha=0.8)
 ax.axhline(179, color='red', linestyle='--', alpha=0.7, label='Steady-state: 179 t/yr')
-ax.set_xlabel('Year'); ax.set_ylabel('Helium Delivered (t/yr)')
-ax.set_title('Annual Helium Delivery'); ax.grid(True, alpha=0.3); ax.legend()
+ax.set_xlabel('Year')
+ax.set_ylabel('Helium Delivered (t/yr)')
+ax.set_title('Annual Helium Delivery')
+ax.grid(True, alpha=0.3)
+ax.legend()
 
 # Cumulative helium
 ax = axes[1, 0]
 ax.plot(sim_years, cumulative_he/1000, 'g-', linewidth=2)
-ax.set_xlabel('Year'); ax.set_ylabel('Cumulative Helium (t)')
-ax.set_title('Cumulative Helium Delivered'); ax.grid(True, alpha=0.3)
+ax.set_xlabel('Year')
+ax.set_ylabel('Cumulative Helium (t)')
+ax.set_title('Cumulative Helium Delivered')
+ax.grid(True, alpha=0.3)
 
 # Fleet composition
 ax = axes[1, 1]
 loops_data = [b.loops_completed for b in buckets if b.active]
 ax.hist(loops_data, bins=range(0, max(loops_data)+2), color='steelblue', edgecolor='white')
-ax.set_xlabel('Loops Completed'); ax.set_ylabel('Active Buckets')
+ax.set_xlabel('Loops Completed')
+ax.set_ylabel('Active Buckets')
 ax.set_title('Fleet Experience Distribution')
 ax.grid(True, alpha=0.3)
 
-plt.tight_layout(); plt.show()
+plt.tight_layout()
+plt.show()
 
 print(f"Fleet Performance (steady state, {sim_years[steady_mask][0]:.0f}+):")
 print(f"  Active Buckets:     {np.mean(active_fleet[steady_mask]):.0f}")
 print(f"  Annual He:          {avg_annual_he/1000:.0f} t/yr")
 print(f"  Cumulative He:      {cumulative_he[-1]/1000:.0f} t over {launch_years} years")
-print(f"  Global He demand:   ~6,000 t/yr (pre-crisis)")
+print("  Global He demand:   ~6,000 t/yr (pre-crisis)")
 print(f"  Fleet share:        {avg_annual_he/1000/60:.1f}%")
 
 # %% [markdown]

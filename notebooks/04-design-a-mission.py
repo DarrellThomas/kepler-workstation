@@ -12,9 +12,9 @@
 
 # %% [markdown]
 # # Tutorial 4: Design a Mission
-# 
+#
 # **Kepler Workstation** — Earth → Saturn → Earth
-# 
+#
 # Full mission design: launch, interplanetary transfer, ISRU analysis,
 # and the rocket equation. Does the mission close?
 
@@ -23,12 +23,15 @@ import sys
 sys.path.insert(0, '../../bindings/python')
 import numpy as np
 import matplotlib.pyplot as plt
-from kepler.constants import *
+from kepler.constants import (
+    GM_SUN, GM_EARTH, GM_SATURN, G0_TITAN,
+    R_EARTH, R_SATURN, SMA_EARTH, SMA_SATURN,
+)
 from kepler.orbit import hohmann_transfer, rocket_equation
 
 # %% [markdown]
 # ## Mission Parameters
-# 
+#
 # Configure your mission. Change these and re-run to see how the
 # feasibility changes.
 
@@ -46,7 +49,7 @@ print(f"LEO parking: {alt_leo_km} km, Saturn parking: {alt_sat_km} km")
 
 # %% [markdown]
 # ## Phase 1: Earth → Saturn Transfer
-# 
+#
 # Hohmann transfer from Earth to Saturn (circular-coplanar approximation).
 
 # %%
@@ -68,24 +71,24 @@ print(f"  Mass in LEO:            {depart['initial_kg']/1000:.0f} t")
 
 # %% [markdown]
 # ## Phase 2: Saturn Arrival
-# 
+#
 # Saturn aerocapture — free ΔV. The atmosphere does the work.
 
 # %%
 # Propulsive capture for comparison
 dv_capture_prop = h_out['dv_arrive']
-capture_prop = rocket_equation(dv_capture_prop, isp_s, 
+capture_prop = rocket_equation(dv_capture_prop, isp_s,
                                 payload_kg + depart['propellant_kg'])
 
-print(f"Capture options at Saturn:")
+print("Capture options at Saturn:")
 print(f"  Propulsive capture ΔV:  {dv_capture_prop/1000:.2f} km/s")
 print(f"  Propellant (propulsive): {capture_prop['propellant_kg']/1000:.0f} t")
-print(f"  Aerocapture:            0 km/s — FREE")
+print("  Aerocapture:            0 km/s — FREE")
 print(f"\nSavings from aerocapture: {capture_prop['propellant_kg']/1000:.0f} t propellant")
 
 # %% [markdown]
 # ## Phase 3: ISRU at Saturn
-# 
+#
 # Can we refuel for the return trip?
 
 # %%
@@ -98,18 +101,18 @@ ke_ev = ke_j / 1.602e-19
 print("Saturn Magnetic Scoop Feasibility:")
 print(f"  Orbital velocity at 500 km: {v_peri/1000:.1f} km/s")
 print(f"  H2 kinetic energy:          {ke_ev:.1f} eV")
-print(f"  Ionization threshold:       15.4 eV")
+print("  Ionization threshold:       15.4 eV")
 print(f"  SCOOP WORKS:                {'YES' if ke_ev >= 15.4 else 'NO — too slow'}")
 print()
 print("Titan ISRU (always available):")
 print(f"  Surface gravity:  {G0_TITAN:.2f} m/s²")
-print(f"  Atmosphere:       1.47 bar N2/CH4 at 94 K")
-print(f"  Methane lakes:    pump liquid CH4 directly")
-print(f"  Surface → orbit:  ~2.6 km/s")
+print("  Atmosphere:       1.47 bar N2/CH4 at 94 K")
+print("  Methane lakes:    pump liquid CH4 directly")
+print("  Surface → orbit:  ~2.6 km/s")
 
 # %% [markdown]
 # ## Phase 4: Return Transfer
-# 
+#
 # Saturn → Earth Hohmann (same ΔV, reversed).
 
 # %%
@@ -119,12 +122,12 @@ h_ret = hohmann_transfer(SMA_SATURN, SMA_EARTH, GM_SUN, GM_SATURN, GM_EARTH,
 print("Return Transfer — Saturn → Earth")
 print(f"  ΔV departure:      {h_ret['dv_depart']/1000:.2f} km/s")
 print(f"  v_inf arrival:     {h_ret['v_inf_arrive']/1000:.2f} km/s")
-print(f"  ΔV arrival:        0 km/s (direct entry)")
+print("  ΔV arrival:        0 km/s (direct entry)")
 print(f"  Time of flight:    {h_ret['tof_days']:.0f} days ({h_ret['tof_days']/365.25:.2f} years)")
 
 # %% [markdown]
 # ## Mission Summary
-# 
+#
 # Does it close? Compare with and without ISRU.
 
 # %%
@@ -159,7 +162,7 @@ print(f"  With ISRU:    {'CLOSES' if mass_isru['initial_kg'] < starship_capacity
 
 # %% [markdown]
 # ## Isp Sensitivity
-# 
+#
 # How does the propellant mass change with Isp? Chemical vs nuclear vs electric.
 
 # %%
@@ -173,12 +176,15 @@ ax.axhline(100, color='red', linestyle='--', alpha=0.5, label='Starship capacity
 ax.axvline(450, color='orange', linestyle=':', alpha=0.7, label='Chemical (450s)')
 ax.axvline(900, color='purple', linestyle=':', alpha=0.7, label='NTR (900s)')
 ax.axvline(3000, color='brown', linestyle=':', alpha=0.7, label='Hall thruster (3000s)')
-ax.set_xlabel('Specific Impulse (seconds)'); ax.set_ylabel('Propellant Mass (tonnes)')
+ax.set_xlabel('Specific Impulse (seconds)')
+ax.set_ylabel('Propellant Mass (tonnes)')
 ax.set_title('Propellant Mass vs Isp — Saturn Round Trip')
-ax.grid(True, alpha=0.3); ax.legend()
-plt.tight_layout(); plt.show()
+ax.grid(True, alpha=0.3)
+ax.legend()
+plt.tight_layout()
+plt.show()
 
 # %% [markdown]
 # ## Next
-# 
+#
 # [Notebook 5: Build a Constellation →](05-build-a-constellation.py)

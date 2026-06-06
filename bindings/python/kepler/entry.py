@@ -68,9 +68,12 @@ def simulate_entry(body, alt_entry, vel_entry, fpa_entry_deg,
         q_kw = sutton_graves_heat(rho, vel, rn_m) / 1000.0 if rho > 1e-15 else 0.0
         
         # Track peaks
-        if g_load > g_max: g_max = g_load
-        if q_kw > q_max: q_max = q_kw
-        if alt < alt_min: alt_min = alt
+        if g_load > g_max:
+            g_max = g_load
+        if q_kw > q_max:
+            q_max = q_kw
+        if alt < alt_min:
+            alt_min = alt
         
         # Sample
         if step % sample_every == 0 and alt > 0:
@@ -139,10 +142,14 @@ def find_corridor(body, alt_entry, vel_entry, mass_kg=5500, area_m2=12.57,
     fpa = -0.5
     while fpa >= -60:
         angles.append(fpa)
-        if fpa > -3: fpa -= 0.1
-        elif fpa > -10: fpa -= 0.25
-        elif fpa > -20: fpa -= 0.5
-        else: fpa -= 1.0
+        if fpa > -3:
+            fpa -= 0.1
+        elif fpa > -10:
+            fpa -= 0.25
+        elif fpa > -20:
+            fpa -= 0.5
+        else:
+            fpa -= 1.0
     
     for fpa_deg in angles:
         r = simulate_entry(body, alt_entry, vel_entry, fpa_deg,
