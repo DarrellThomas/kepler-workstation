@@ -26,6 +26,8 @@ Applications/MissileSim/
 # Large binary data (tracked via Git LFS or downloaded separately)
 Ephemeris/*.440
 Ephemeris/*.441
+PlanetaryModels/data/
+
 
 # UE5 generated
 *.target
