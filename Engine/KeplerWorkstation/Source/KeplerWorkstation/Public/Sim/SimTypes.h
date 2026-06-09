@@ -163,6 +163,9 @@ enum class ECelestialBody : uint8
 	Mars     UMETA(DisplayName = "Mars"),
 	Jupiter  UMETA(DisplayName = "Jupiter"),
 	Saturn   UMETA(DisplayName = "Saturn"),
+	Titan    UMETA(DisplayName = "Titan"),
+	Neptune  UMETA(DisplayName = "Neptune"),
+	Uranus   UMETA(DisplayName = "Uranus"),
 	Sun      UMETA(DisplayName = "Sun"),
 };
 

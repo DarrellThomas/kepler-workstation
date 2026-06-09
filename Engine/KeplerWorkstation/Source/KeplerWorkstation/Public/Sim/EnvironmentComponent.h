@@ -4,7 +4,8 @@
 //
 // Provides atmospheric state (density, pressure, temperature, speed of sound)
 // and gravitational acceleration at the vehicle's current position.
-// Supports multiple celestial bodies (Earth, Venus, Mars, Jupiter, Moon).
+// Supports multiple celestial bodies (Earth, Venus, Mars, Jupiter, Saturn,
+// Titan, Neptune, Uranus, Moon).
 // Gravity includes zonal harmonics (J2-J10 depending on body).
 //
 // Data sources:
@@ -12,10 +13,12 @@
 //   Mars atmo:  NASA GRC (Mars Global Surveyor 1996)
 //   Venus atmo: Venera/Pioneer Venus probe data
 //   Jupiter atmo: Galileo Probe ASI (Seiff et al. 1998)
+//   Titan atmo: Huygens HASI (Fulchignoni et al. 2005) — 273-point data-driven lookup
 //   Earth gravity: WGS-84/EGM96, J2-J6
 //   Mars gravity: GMM-3 (Genova et al. 2016), J2-J6
 //   Venus gravity: Magellan MGNP180U (Konopliv et al. 1999), J2-J4
 //   Jupiter gravity: Juno (Iess et al. 2018), J2-J10
+//   Titan gravity: Cassini (Iess et al. 2010), J2
 //   Moon gravity: GRAIL (Zuber/Konopliv 2013), J2-J6
 
 #pragma once
