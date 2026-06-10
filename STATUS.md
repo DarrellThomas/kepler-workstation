@@ -4,7 +4,7 @@ Aerospace simulation and mission design platform. Real physics, real data, open 
 
 ## Last Touched
 
-2026-06-05 — Python bindings, Jupyter notebooks, 5-tutorial curriculum
+2026-06-10 — Landed TitanSurface UE5 project (Phase 0); gitignore cleanup for generated artifacts
 
 ## Quick Start
 
@@ -45,6 +45,9 @@ jupyter lab  # or open .py files in VS Code
 - [x] HypersonicEntry app — 7-body entry corridor analysis, 3-DOF RK4 sim (516 LOC)
 - [x] SaturnMission app — Earth→Saturn→Earth launch script, ISRU analysis (535 LOC)
 - [x] CR3BP dynamics — halo orbits, manifolds, patched 3-body, Python validation
+- [-] TitanSurface app — UE5 project + game module landed (TitanGameMode, TitanLevelSetup,
+      TitanPlayerCharacter, HASI atmosphere); data pipeline done; needs editor session for
+      landscape import + level assembly (see Applications/TitanSurface/README.md)
 - [ ] GPU compute (CUDA kernels) — not started
 
 ### Milestone 3: The Education
@@ -60,17 +63,20 @@ jupyter lab  # or open .py files in VS Code
 
 ## Next Up
 
-1. **Claude co-author credit** — README attribution fix
-2. **Screen-record 15s clip** — X post visual (camera: behind Jupiter → harvesters arrive → scooping → return)
-3. **Craft the X post** — hook: helium crisis + physics insight, visual, link, tag @elonmusk
-4. **UE5 plugin** — fill stub implementations in Environment and OrbitalMechanics components
-5. **GPU compute** — CUDA kernels for batch Lambert and Monte Carlo
+1. **TitanSurface editor session** — build TitanSurfaceEditor, import heightmap as landscape,
+   apply SAR/ISS material, drop TitanLevelSetup actor, walk on Titan (Phase 0 finish line)
+2. **Claude co-author credit** — README attribution fix
+3. **Screen-record 15s clip** — X post visual (camera: behind Jupiter → harvesters arrive → scooping → return)
+4. **Craft the X post** — hook: helium crisis + physics insight, visual, link, tag @elonmusk
+5. **UE5 plugin** — fill stub implementations in Environment and OrbitalMechanics components
+6. **GPU compute** — CUDA kernels for batch Lambert and Monte Carlo
 
 ## Blocked / Waiting
 
 - UE5 plugin integration needs a session dedicated to porting standalone libs into UE5 components
 - No JPL DE440 binary in repo (.gitignored) — users must download separately (~100 MB)
 - X post needs video clip before crafting
+- ~~GPU permissions for UE5 rendering~~ — resolved, darrell is in video+render groups
 
 ## Key Findings
 
@@ -109,6 +115,6 @@ jupyter lab  # or open .py files in VS Code
 - **~14,000 LOC** C++ (standalone + UE5 stubs) + **~700 LOC** Python
 - **13 working C++ binaries** + **5 Jupyter notebooks**
 - **8 atmospheric bodies** modeled (Earth, Venus, Mars, Jupiter, Saturn, Titan, Neptune, Uranus)
-- **18 git commits**, single main branch
+- **23 git commits**, single main branch
 - **Remote:** `git@github.com:DarrellThomas/kepler-workstation.git`
 - **Live:** `https://darrellthomas.github.io/kepler-workstation/`

@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.4",
+	"Category": "Simulation",
+	"Description": "Stand on Titan - Real Cassini-Huygens data in UE5",
+	"Modules": [
+		{
+			"Name": "TitanSurface",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "KeplerWorkstation",
+			"Enabled": true
+		}
+	]
+}

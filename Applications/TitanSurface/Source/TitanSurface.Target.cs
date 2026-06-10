@@ -1,0 +1,11 @@
+using UnrealBuildTool;
+public class TitanSurfaceTarget : TargetRules
+{
+	public TitanSurfaceTarget(TargetInfo Target) : base(Target)
+	{
+		Type = TargetType.Game;
+		DefaultBuildSettings = BuildSettingsVersion.V4;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
+		ExtraModuleNames.Add("TitanSurface");
+	}
+}

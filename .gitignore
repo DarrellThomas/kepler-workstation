@@ -32,3 +32,24 @@ PlanetaryModels/data/
 # UE5 generated
 *.target
 *.modules
+Applications/TitanSurface/Makefile
+Applications/TitanSurface/TitanSurface.code-workspace
+
+# Generated data products (rebuild via Tools/ pipelines)
+Tools/titan_heightmap/output/
+
+# Python
+__pycache__/
+
+# Compiled test/demo binaries (build locally per STATUS.md)
+Applications/JupiterHarvester/manifold_analysis
+Applications/JupiterHarvester/multi_moon_analysis
+Applications/JupiterHarvester/test_aeropass
+Applications/SaturnHarvester/saturn_full_sim
+Applications/SaturnHarvester/saturn_station
+Applications/SaturnHarvester/saturn_vs_jupiter
+Applications/SaturnHarvester/saturn_vs_jupiter_realgas
+Ephemeris/cr3bp/test_cr3bp
+PlanetaryModels/test_models_test
+PlanetaryModels/test_stat_thermo
+PlanetaryModels/validate_earth
